@@ -1,9 +1,11 @@
 package app;
 
-import view.FitnessMain;
+
+import view.MainInterface;
 
 public class App {
    public static void main(String[] args) {
-	   FitnessMain newApp = new FitnessMain();
+	      MainInterface main = new MainInterface();
+	      main.run();
    }
 }

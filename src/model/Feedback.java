@@ -13,6 +13,9 @@ public class Feedback {
  * @param coachId
  * @param comment
  */
+   public Feedback() {
+	   
+   }
 public Feedback(String feedbackId, String trainneeId, String courseId, String coachId, String comment) {
 	super();
 	this.feedbackId = feedbackId;

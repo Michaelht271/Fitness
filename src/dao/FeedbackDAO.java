@@ -29,7 +29,7 @@ public class FeedbackDAO implements DAOInterface<Feedback> {
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, feedback.getFeedbackId());
-            preparedStatement.setString(2, feedback.getTrainneeId());
+            preparedStatement.setString(2, feedback.getTraineeId());
             preparedStatement.setString(3, feedback.getCourseId());
             preparedStatement.setString(4, feedback.getCoachId());
             preparedStatement.setString(5, feedback.getComment());
@@ -47,7 +47,7 @@ public class FeedbackDAO implements DAOInterface<Feedback> {
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            preparedStatement.setString(1, feedback.getTrainneeId());
+            preparedStatement.setString(1, feedback.getTraineeId());
             preparedStatement.setString(2, feedback.getCourseId());
             preparedStatement.setString(3, feedback.getCoachId());
             preparedStatement.setString(4, feedback.getComment());

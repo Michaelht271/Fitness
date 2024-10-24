@@ -75,7 +75,7 @@ public class WorkoutService {
         return (index != -1) ? workoutList.get(index) : null; // Lấy workout từ danh sách
     }
 
-    statice int findWorkoutIndexById(String workoutId) {
+    static int findWorkoutIndexById(String workoutId) {
         for (int i = 0; i < workoutList.size(); i++) {
             if (workoutList.get(i).getWorkoutId().equals(workoutId)) {
                 return i; // Trả về chỉ số của workout nếu tìm thấy

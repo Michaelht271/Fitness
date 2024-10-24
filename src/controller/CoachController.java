@@ -31,7 +31,7 @@ import service.WorkoutService;
 import utils.Utils;
 
 public class CoachController {
-	CoachService coachService = new CoachService();
+	static CoachService coachService = new CoachService();
 	CourseService courseService = new CourseService();
 	TraineeService traineeService = new TraineeService();
 	FeedbackService feedbackService = new FeedbackService();
@@ -49,7 +49,8 @@ public class CoachController {
 		}
 		return null;
 	}
-
+    
+	// Tạo Course bỏi Coach
 	public boolean createCourse(String coachId) {
 		Scanner scanner = new Scanner(System.in);
 
@@ -135,12 +136,13 @@ public class CoachController {
 	private static AtomicInteger courseCount = new AtomicInteger(0);
 	private static AtomicInteger scheduleCount = new AtomicInteger(0);
 
-	// Helper methods to generate IDs
+	//Tạo CourseID tự dộng
 	private String generateCourseId() {
 		int count = courseCount.incrementAndGet(); // Tăng số lượng khóa học
 		return String.format("CS-%04d", count); // Tạo ID theo định dạng CS-1234
 	}
 
+	// Tạo scheduleID tự động
 	private String generateScheduleId() {
 		int count = scheduleCount.incrementAndGet(); // Tăng số lượng lịch tập
 		return String.format("SC-%04d", count); // Tạo ID theo định dạng SC-1234
@@ -294,8 +296,45 @@ public class CoachController {
 		return true;
 	}
 
-	// Helper method to generate Note ID
+	// Tạo NoteId tự động
 	private String generateNoteId() {
 		return "NO-" + (NoteService.noteCache.size() + 1);
 	}
+	
+	public  static void viewCoaches() {
+		try {
+	        // Lấy danh sách huấn luyện viên
+	        ArrayList<Coach> coaches = coachService.getAllCoaches();
+	        
+	        // Kiểm tra xem danh sách có rỗng không
+	        if (coaches.isEmpty()) {
+	            System.out.println("No coaches available.");
+	            return;
+	        }
+
+	        // In tiêu đề
+	        System.out.printf("%-10s %-20s %-10s %-15s %-25s %-10s %-10s %-10s%n", 
+	                          "Coach ID", "Coach Name", "Level", "Phone", "Email", "Height", "Weight", "Gender");
+	        System.out.println("-------------------------------------------------------------------------------------------");
+
+	        // In thông tin từng huấn luyện viên
+	        for (Coach coach : coaches) {
+	            System.out.printf("%-10s %-20s %-10s %-15s %-25s %-10.2f %-10.2f %-10s%n",
+	                              coach.getCoachId(),
+	                              coach.getFullName(),
+	                              coach.getLevel(),
+	                              coach.getPhone(),
+	                              coach.getEmail(),
+	                              coach.getHeight(),
+	                              coach.getWeight(),
+	                              coach.getGender());
+	        }
+	    } catch (NullPointerException e) {
+	        System.out.println("Error: Unable to retrieve coach list. The coach service might not be initialized.");
+	    } catch (Exception e) {
+	        System.out.println("An unexpected error occurred: " + e.getMessage());
+	    }
+	}
+
+
 }
