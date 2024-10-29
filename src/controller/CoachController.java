@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 import model.Coach;
@@ -50,88 +50,69 @@ public class CoachController {
 		return null;
 	}
     
-	// Tạo Course bỏi Coach
 	public boolean createCourse(String coachId) {
-		Scanner scanner = new Scanner(System.in);
+	  
 
-		System.out.print("Enter Course Name: ");
-		String courseName = scanner.nextLine();
+	    // Sử dụng Utils để đọc thông tin khóa học
+	    String courseName = Utils.readName("Enter Course Name: ");
+	    String description = Utils.readString("Enter Course Description: ");
+	    String courseType = Utils.readString("Enter Course Type: ");
+	    
+	    LocalDate startDate = Utils.readDate("Enter Course Start Date (yyyy-MM-dd): ");
+	    LocalDate endDate = Utils.readDate("Enter Course End Date (yyyy-MM-dd): ");
+	    
+	    double price = Utils.readDouble("Enter Course Price: ");
+	    int maxParticipants = Utils.readInt("Enter Max Participants: ");
+	    int totalSessions = Utils.readInt("Enter Total Session: ");
 
-		System.out.print("Enter Course Description: ");
-		String description = scanner.nextLine();
+	    Course newCourse = new Course(generateCourseId(), courseName, description, coachId, courseType, maxParticipants,
+	            startDate, endDate, price, totalSessions);
 
-		System.out.print("Enter Course Type: ");
-		String courseType = scanner.nextLine();
+	    // Tạo lịch tập cho khóa học
+	    List<Schedule> schedules = new ArrayList<>();
+	    int numSchedules = Utils.readInt("Enter number of schedules for this course: ");
 
-		System.out.print("Enter Course Start Date (yyyy-MM-dd): ");
-		LocalDate startDate = LocalDate.parse(scanner.nextLine());
+	    for (int i = 0; i < numSchedules; i++) {
+	        LocalDate date = Utils.readDate("Enter Schedule Date (yyyy-MM-dd): ");
+	        LocalTime startTime = Utils.readTime("Enter Start Time (HH:mm): ");
+	        LocalTime endTime = Utils.readTime("Enter End Time (HH:mm): ");
 
-		System.out.print("Enter Course End Date (yyyy-MM-dd): ");
-		LocalDate endDate = LocalDate.parse(scanner.nextLine());
+	        Schedule schedule = new Schedule(generateScheduleId(), newCourse.getCourseId(), date, startTime, endTime);
+	        schedules.add(schedule);
+	        scheduleService.addSchedule(schedule); // Thêm vào danh sách ScheduleService
+	    }
 
-		System.out.print("Enter Course Price: ");
-		double price = scanner.nextDouble();
+	    // Tạo TakeWorkout cho khóa học
+	    List<TakeWorkout> takeWorkouts = new ArrayList<>();
 
-		System.out.print("Enter Max Participants: ");
-		int maxParticipants = scanner.nextInt();
-		scanner.nextLine(); // Consume newline character
+	    // Hiển thị workout
+	    System.out.println("Available Workouts:");
+	    List<Workout> workouts = workoutSerVice.getAllWorkouts(); // Giả định bạn có phương thức này
+	    System.out.printf("%-10s %-20s %-10s %-10s %-30s %-20s%n", "ID", "Name", "Duration", "Level", "Instruction",
+	            "Equipment");
+	    System.out.println("-------------------------------------------------------------");
+	    for (Workout workout : workouts) {
+	        System.out.printf("%-10s %-20s %-10d %-10s %-30s %-20s%n", workout.getWorkoutId(), workout.getWorkoutName(),
+	                workout.getDuration(), workout.getLevel(), workout.getInstruction(),
+	                workout.getEquipmentRequired());
+	    }
 
-		int totalSessions = Utils.readInt("Enter Total Session : ");
+	    // Tạo TakeWorkout
+	    String workoutIdsInput = Utils.readString("Enter Workout IDs for this course (separated by commas): ");
+	    String[] workoutIds = workoutIdsInput.split(",");
 
-		Course newCourse = new Course(generateCourseId(), courseName, description, coachId, courseType, maxParticipants,
-				startDate, endDate, price, totalSessions);
-
-		// Tạo lịch tập cho khóa học
-		List<Schedule> schedules = new ArrayList<>();
-		System.out.print("Enter number of schedules for this course: ");
-		int numSchedules = scanner.nextInt();
-		scanner.nextLine(); // Consume newline character
-
-		for (int i = 0; i < numSchedules; i++) {
-			System.out.print("Enter Schedule Date (yyyy-MM-dd): ");
-			LocalDate date = LocalDate.parse(scanner.nextLine());
-
-			System.out.print("Enter Start Time (HH:mm): ");
-			LocalTime startTime = LocalTime.parse(scanner.nextLine());
-
-			System.out.print("Enter End Time (HH:mm): ");
-			LocalTime endTime = LocalTime.parse(scanner.nextLine());
-
-			Schedule schedule = new Schedule(generateScheduleId(), newCourse.getCourseId(), date, startTime, endTime);
-			schedules.add(schedule);
-			scheduleService.addSchedule(schedule);// Thêm vào danh sách ScheduleService
-		}
-
-		// Tạo TakeWorkout cho khóa học
-		List<TakeWorkout> takeWorkouts = new ArrayList<>();
-
-		// Hiển thị workout
-		System.out.println("Available Workouts:");
-		List<Workout> workouts = workoutSerVice.getAllWorkouts(); // Giả định bạn có phương thức này
-		System.out.printf("%-10s %-20s %-10s %-10s %-30s %-20s%n", "ID", "Name", "Duration", "Level", "Instruction",
-				"Equipment");
-		System.out.println("-------------------------------------------------------------");
-		for (Workout workout : workouts) {
-			System.out.printf("%-10s %-20s %-10d %-10s %-30s %-20s%n", workout.getWorkoutId(), workout.getWorkoutName(),
-					workout.getDuration(), workout.getLevel(), workout.getInstruction(),
-					workout.getEquipmentRequired());
-		}
-
-		// Tạo TakeWorkout
-		System.out.print("Enter Workout IDs for this course (separated by commas): ");
-		String workoutIdsInput = scanner.nextLine();
-		String[] workoutIds = workoutIdsInput.split(",");
-
-		for (String workoutId : workoutIds) {
-			workoutId = workoutId.trim(); // Loại bỏ khoảng trắng
-			TakeWorkout takeWorkout = new TakeWorkout(newCourse.getCourseId(), workoutId);
-			takeWorkouts.add(takeWorkout);
-			takeWorkoutService.addTakeWorkout(takeWorkout);
-		}
-		courseService.addCourse(newCourse);
-		System.out.println("Course created successfully!");
-		return true;
+	    for (String workoutId : workoutIds) {
+	        workoutId = workoutId.trim(); // Loại bỏ khoảng trắng
+	        TakeWorkout takeWorkout = new TakeWorkout(newCourse.getCourseId(), workoutId);
+	        takeWorkouts.add(takeWorkout);
+	        takeWorkoutService.addTakeWorkout(takeWorkout);
+	    }
+	    
+	    courseService.addCourse(newCourse);
+	    System.out.println("Course created successfully!");
+	    return true;
 	}
+
 
 	private static AtomicInteger courseCount = new AtomicInteger(0);
 	private static AtomicInteger scheduleCount = new AtomicInteger(0);
@@ -239,28 +220,25 @@ public class CoachController {
 
 	// Tạo ghi chú cho khóa học
 	public boolean createNote() {
-		Scanner scanner = new Scanner(System.in);
+	    String traineeId = Utils.readTraineeId("Enter Trainee ID: ");
 
-		System.out.print("Enter Trainee ID: ");
-		String traineeId = scanner.nextLine();
+	    // Sử dụng Utils để đọc Course ID
+	    String courseId = Utils.readCourseId("Enter Course ID: ");
 
-		System.out.print("Enter Course ID: ");
-		String courseId = scanner.nextLine();
+	    // Sử dụng Utils để đọc Workout ID
+	    String workoutId = Utils.readString("Enter Workout ID: ");
 
-		System.out.print("Enter Workout ID: ");
-		String workoutId = scanner.nextLine();
+	    // Sử dụng Utils để đọc nội dung ghi chú
+	    String noteContent = Utils.readString("Enter Note Content: ");
 
-		System.out.print("Enter Note Content: ");
-		String noteContent = scanner.nextLine();
+	    String noteId = generateNoteId();
+	    // Lưu thời gian tạo ghi chú
 
-		String noteId = generateNoteId();
-		// Lưu thời gian tạo ghi chú
+	    Note newNote = new Note(noteId, traineeId, courseId, workoutId, noteContent);
 
-		Note newNote = new Note(noteId, traineeId, courseId, workoutId, noteContent);
-
-		noteService.addNote(newNote);
-		System.out.println("Note created successfully!");
-		return true;
+	    noteService.addNote(newNote);
+	    System.out.println("Note created successfully!");
+	    return true;
 	}
 
 	// Xem lịch dạy của Coach
@@ -300,26 +278,40 @@ public class CoachController {
 	private String generateNoteId() {
 		return "NO-" + (NoteService.noteCache.size() + 1);
 	}
-	
-	public  static void viewCoaches() {
-		try {
+	public static void viewCoaches() {
+	    try {
 	        // Lấy danh sách huấn luyện viên
 	        ArrayList<Coach> coaches = coachService.getAllCoaches();
 	        
 	        // Kiểm tra xem danh sách có rỗng không
 	        if (coaches.isEmpty()) {
-	            System.out.println("No coaches available.");
+	            System.out.println("🚫 No coaches available.");
 	            return;
 	        }
 
-	        // In tiêu đề
-	        System.out.printf("%-10s %-20s %-10s %-15s %-25s %-10s %-10s %-10s%n", 
+	        // Định dạng tiêu đề với icon
+	        String title =   "===============================================================================================================================\n"
+	                     + "\"                                                🎓 COACH TABLE                                                               \"";
+	                    
+
+	        // Định dạng bảng
+	        String formatTitle = "| %-10s | %-20s | %-15s | %-12s | %-25s | %-6s | %-8s | %-6s |%n";
+	        String formatCoach = "| %-10s | %-20s | %-15s | %-12s | %-25s | %-6d | %-8.2f | %-6s |%n";
+
+	        // Định nghĩa đường viền cho bảng
+	        String border = "+------------+----------------------+-----------------+--------------+---------------------------+--------+----------+--------+";
+	        String doubleBorder = "===============================================================================================================================";
+
+	        // In tiêu đề và đường viền
+	        System.out.println("\n" + title);
+	        System.out.println(doubleBorder);
+	        System.out.printf(formatTitle, 
 	                          "Coach ID", "Coach Name", "Level", "Phone", "Email", "Height", "Weight", "Gender");
-	        System.out.println("-------------------------------------------------------------------------------------------");
+	        System.out.println(border);
 
 	        // In thông tin từng huấn luyện viên
 	        for (Coach coach : coaches) {
-	            System.out.printf("%-10s %-20s %-10s %-15s %-25s %-10.2f %-10.2f %-10s%n",
+	            System.out.printf(formatCoach,
 	                              coach.getCoachId(),
 	                              coach.getFullName(),
 	                              coach.getLevel(),
@@ -329,6 +321,10 @@ public class CoachController {
 	                              coach.getWeight(),
 	                              coach.getGender());
 	        }
+
+	        // In đường viền kết thúc bảng
+	        System.out.println(border);
+
 	    } catch (NullPointerException e) {
 	        System.out.println("Error: Unable to retrieve coach list. The coach service might not be initialized.");
 	    } catch (Exception e) {

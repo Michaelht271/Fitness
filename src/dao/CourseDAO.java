@@ -104,7 +104,7 @@ public class CourseDAO implements DAOInterface<Course> {
                 course.setStartDate(resultSet.getDate("startDate").toLocalDate());
                 course.setEndDate(resultSet.getDate("endDate").toLocalDate());
                 course.setPrice(resultSet.getDouble("price"));
-                course.setTotalSessions(resultSet.getInt("totalSessions"));
+                course.setTotalSessions(resultSet.getInt("totalSession"));
                 courses.add(course);
             }
         } catch (SQLException e) {

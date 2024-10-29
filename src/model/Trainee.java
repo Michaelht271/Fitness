@@ -83,13 +83,20 @@ public class Trainee extends Person {
     @Override
     public String toString() {
         return String.format(
-            "| %-15s | %-10s | %-10s | %-15s | %-15s | %-10s |", 
-            traineeId,                // Căn trái, độ rộng 15
-            password,                 // Căn trái, độ rộng 10
-            level,                    // Căn trái, độ rộng 10
-            addressId,                // Căn trái, độ rộng 15
-            getPhone(),               // Căn trái, độ rộng 15
-            getBirthday() != null ? getBirthday().toString() : "N/A" // Hiển thị ngày sinh
+            "| %-15s | %-15s | %-10s | %-10s | %-50s | %-15s | %-15s | %-20s | %-10d | %-10.2f | %-15s |",
+            getTraineeId(),                                   // ID người học
+            getFullName(),                               // Tên đầy đủ
+            getGender(),                                 // Giới tính
+            getRole(),                                   // Vai trò
+            getEmail(),                                       // Email
+            getPhone(),                                  // Số điện thoại
+            getBirthday() != null ? getBirthday().toString() : "N/A", // Ngày sinh
+            getCitizenIdentification(),                  // CMND/CCCD
+            getHeight(),                                      // Chiều cao
+            getWeight(),                                      // Cân nặng
+            getLevel()                                    // Cấp độ người học
+                                
         );
     }
+
 }

@@ -57,6 +57,6 @@ public class Address {
 
     @Override
     public String toString() {
-        return String.format("|%-15s|%-30s|%-10d|", city, street, houseNumber);
+        return String.format(" %-15s | %-20s | %-10d   |", city, street, houseNumber);
     }
 }

@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import controller.CoachController;
-import controller.CourseController;
+
 import controller.TraineeController;
 import model.Trainee;
 import utils.Utils;
@@ -28,6 +28,7 @@ public class TraineeView extends Menu<String>{
     };
 
     public TraineeView(Trainee trainee) {
+    	
         super(TraineeTitle, TraineeMenuChoices);
         this.trainee = trainee;
     }
@@ -64,18 +65,41 @@ public class TraineeView extends Menu<String>{
     }
 
     private void viewProfile() {
-       System.out.println(traineeController.getTrainee(trainee.getTraineeId()));
-    }
-    
+    	
+    	   
+    	 System.out.println("=============== TRAINEE INFORMATION ===============");
+    	    System.out.println(String.format(
+    	        "| %-15s | %-15s | %-10s | %-10s | %-50s | %-15s | %-15s | %-20s | %-10s | %-10s | %-15s | %-15s | %-20s | %-10s |",
+    	        "Trainee ID", "Full Name", "Gender", "Role", "Email", "Phone", "Birthday", 
+    	        "Citizen ID", "Height", "Weight", "Level", "City", "Street", "House Number"
+    	    ));
+    	        System.out.println(traineeController.getTrainee(trainee.getTraineeId()));
+    	        System.out.println("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+    	    }
+
+    	    
+
+     
     
     public void displayEnrolledCourses(String traineeId) {
         ArrayList<String> courseDetails = traineeController.viewCoursesEnrolled(traineeId);
         if (courseDetails.isEmpty()) {
             System.out.println("You are not enrolled in any courses.");
         } else {
+        	
+        	    System.out.println("=============== COURSE INFORMATION ===============");
+        	    
+        	    System.out.println(String.format(
+        	        "| %-10s | %-30s | %-50s | %-20s | %-20s | %-20s | %-10s |",
+        	        "Course ID", "Course Name", "Description", "Type", "Start Date", "End Date", "Price"
+        	    ));
+        	    
+        
+
             for (String course : courseDetails) {
                 System.out.println(course);
             }
+            System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
         }
     }
 
@@ -90,7 +114,7 @@ public class TraineeView extends Menu<String>{
     private void enrollInCourse() {
       
      
-        String traineeId = Utils.readTraineeId("Enter your Trainee ID: ");
+        String traineeId = trainee.getTraineeId();
 
         // Gọi phương thức enrollCourse từ lớp CoachController
         boolean isEnrolled = traineeController.enrollCourse(traineeId);

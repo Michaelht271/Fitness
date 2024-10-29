@@ -114,7 +114,22 @@ public abstract class Utils {
         phone = trimOrNull(phone);
         return phone.matches(PHONE_NUMBER_REGEX);
     }
-
+    public static String readPhone(String message) {
+        String phone;
+        boolean isValid;
+        
+        do {
+            phone = readString(message); // Gọi phương thức để đọc chuỗi từ người dùng
+            isValid = isPhoneNumber(phone); // Kiểm tra tính hợp lệ của số điện thoại
+            
+            if (!isValid) {
+                System.out.println("[-] Invalid phone number. Please enter a valid phone number (10-11 digits).");
+            }
+        } while (!isValid);
+        
+        return phone; // Trả về số điện thoại hợp lệ
+    }
+    
     // Xóa khoảng trắng đầu và cuối chuỗi, nếu chuỗi rỗng trả về null
     public static String trimOrNull(String str) {
         if (str == null)
@@ -178,7 +193,7 @@ public abstract class Utils {
         while (true) {
             try {
                 System.out.print(message);
-                String res = input.nextLine().trim().toLowerCase();
+                String res = getValue().trim().toLowerCase();
                 if (res.equals("true") || res.equals("false"))
                     return Boolean.parseBoolean(res);
                 else
@@ -307,13 +322,19 @@ public abstract class Utils {
     // Method to read a password securely
     public static String readPassword(String message) {
     	System.out.print(message);
-        Console console = System.console();
-        if (console == null) {
+         String password = getValue();
+        if (password == null) {
             throw new RuntimeException("No console available.");
+        } else if(isValidPassword(password)){
+        	
+        	 return new String(password);
+        } else {
+        	System.out.println("[-] Password is invalid ");
+        	return null;
         }
         
-        char[] passwordArray = console.readPassword("Enter your password: ");
-        return new String(passwordArray);
+       // char[] passwordArray = console.readPassword("Enter your password: ");
+       
     }
  // Hàm đọc Citizen Identification
     public static String readCitizenIdentification(String message) {

@@ -30,6 +30,7 @@ public class BossView extends Menu<String>{
 	public void execute(int choice) {
 		switch (choice) {
         case 1:
+        	 bossController.viewAllCoaches();
             manageCoaches();
             break;
         case 2:
@@ -55,16 +56,18 @@ public class BossView extends Menu<String>{
    
 
 	private void manageCoaches() {
+		
 	    // Khởi tạo các tùy chọn cho Menu
 	    String[] options = {
 	        "Add Coach",
 	        "Delete Coach",
 	        "Update Coach",
-	        "Back to Main Menu"
+	        
 	    };
 
 	    // Tạo một menu mới với tiêu đề và các tùy chọn
 	    Menu<String> menuCoaches = new Menu<String>("=== Manage Coaches ===", options) {
+	    	
 	        @Override
 	        public void execute(int choice) {
 	            switch (choice) {
@@ -83,10 +86,12 @@ public class BossView extends Menu<String>{
 	                    System.out.println("[-] Invalid option. Please try again.");
 	            }
 	        }
+	       
 	    };
 
 	    // Chạy menu
 	    menuCoaches.run();
+	    
 	}
 
 

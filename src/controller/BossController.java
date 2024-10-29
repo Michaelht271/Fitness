@@ -18,7 +18,9 @@ import utils.Utils;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +34,7 @@ public class BossController {
     private ScheduleService scheduleService;
     private static AtomicInteger courseCount = new AtomicInteger(0);
 	private static AtomicInteger scheduleCount = new AtomicInteger(0);
+	
     public BossController() {
         this.coachService = new CoachService();
         this.traineeService = new TraineeService();
@@ -49,10 +52,18 @@ public class BossController {
         if (coachList.isEmpty()) {
             System.out.println("No coaches available.");
         } else {
+
+	        // Định dạng tiêu đề với icon
+        	
+	        String title =  "\"                                                      🎓 COACH TABLE                                                                           \"";
+	                    
+
             // Tiêu đề bảng
             String header = String.format("%-10s | %-20s | %-6s | %-10s | %-20s | %-15s | %-12s | %-6s | %-8s | %-10s | %-15s | %-10s | %-10s | %-10s", 
                                           "ID", "Name", "Gender", "Role", "Email", "Phone", "ID Number", 
                                           "Height", "Weight", "Birthday", "Level", "Salary", "Address ID", "Password");
+            System.out.println("=".repeat(header.length()));
+            System.out.println(title);
             System.out.println(header);
             System.out.println("=".repeat(header.length()));
 
@@ -72,23 +83,27 @@ public class BossController {
  // View danh sách Trainee
     public void viewAllTrainees() {
         List<Trainee> traineeList = traineeService.getAllTrainees();
+        
         if (traineeList.isEmpty()) {
             System.out.println("No trainees available.");
         } else {
+        	String title =   "===============================================================================================================================\n"
+                    + "\"                                                🎓 TRAINEE TABLE                                                               \"";
             // Tiêu đề bảng
             String header = String.format("%-10s | %-20s | %-6s | %-10s | %-15s | %-20s | %-6s | %-8s | %-10s | %-10s | %-15s | %-10s | %-20s | %-20s",
                                           "ID", "Name", "Gender", "Role", "Email", "Phone", "Birthday", "Height", "Weight", "Level", "Number House", "Street", "City");
+            System.out.println(title);
             System.out.println(header);
             System.out.println("=".repeat(header.length()));
 
             // In thông tin Trainee theo định dạng
             for (Trainee trainee : traineeList) {
-                Address address = addressService.getAddressById(trainee.getAddressId());
+                 Address address = addressService.getAddressById(trainee.getAddressId());
                  int  numberHouse = address != null ? address.getHouseNumber() : -1;
-                String street = address != null ? address.getStreet() : "Unknown";
-                String city = address != null ? address.getCity() : "Unknown";
+                 String street = address != null ? address.getStreet() : "Unknown";
+                 String city = address != null ? address.getCity() : "Unknown";
 
-                String traineeInfo = String.format("%-10s | %-20s | %-6s | %-10s | %-15s | %-20s | %-6s | %-8.2f | %-10.2f | %-10s | %-10d | %-20s | %-20s",
+                 String traineeInfo = String.format("%-10s | %-20s | %-6s | %-10s | %-15s | %-20s | %-6s | %-8.2f | %-10.2f | %-10s | %-10d | %-20s | %-20s",
                                                    trainee.getTraineeId(), trainee.getFullName(), trainee.getGender(), 
                                                    trainee.getRole(), trainee.getEmail(), trainee.getPhone(), 
                                                    trainee.getBirthday(), trainee.getHeight(), trainee.getWeight(), 
@@ -108,9 +123,13 @@ public class BossController {
             System.out.println("No courses available.");
         } else {
             // Tiêu đề bảng
+        	String title =   "===============================================================================================================================\n"
+                    + "\"                                                🎓 COURSE TABLE                                                               \"";
+           
             String header = String.format("%-10s | %-20s | %-30s | %-10s | %-15s | %-10s | %-15s | %-15s | %-10s | %-10s", 
                                           "Course ID", "Course Name", "Description", "Coach ID", "Type", "Max", 
                                           "Start Date", "End Date", "Price", "Sessions");
+            System.out.println(title);
             System.out.println(header);
             System.out.println("=".repeat(header.length()));
 
@@ -129,81 +148,92 @@ public class BossController {
 
     
     public boolean addCoach() {
-        Scanner scanner = new Scanner(System.in);
-        
-        // Hiển thị tiêu đề
         System.out.println("************* Add Coach *************\n");
 
         // Tạo ID huấn luyện viên ngẫu nhiên
-        String coachId = Utils.generateCoachId(); 
+        String coachId = Utils.generateCoachId();
 
         // Kiểm tra xem coach có tồn tại không
-        if (coachService.getCoachById(coachId) != null) {
-            System.out.println("*****************************************");
+        if (isCoachIdDuplicate(coachId)) {
             System.out.println("🚫 Coach with this ID already exists!");
-            System.out.println("*****************************************");
-            return false; // Trả về false nếu coach đã tồn tại
+            return false;
         }
 
         System.out.println("===== Coach Registration =====");
-        
-        // Nhập thông tin cá nhân
-        String fullName = Utils.readName("🔹 Enter Full Name: "); 
-        String gender = Utils.readString("🔹 Enter Gender: "); 
-        String role = Utils.readString("🔹 Enter Role: "); 
-        String email = Utils.readEmail("🔹 Enter Email: "); 
-        String phone = Utils.readString("🔹 Enter Phone: "); 
-        String citizenIdentification = Utils.readCitizenIdentification("🔹 Enter Citizen Identification: "); 
-        int height = Utils.readInt("🔹 Enter Height (in cm): "); 
-        double weight = Utils.readDouble("🔹 Enter Weight (in kg): "); 
-        LocalDate birthday = Utils.readDate("🔹 Enter Birthday (yyyy-MM-dd): "); 
-        
-        // Nhập và xác nhận mật khẩu
-        String password = Utils.readPassword("🔹 Enter Password: "); 
-        String confirmPassword = Utils.readPassword("🔹 Confirm Password: "); 
 
-        // Kiểm tra xem mật khẩu có khớp không
-        if (!password.equals(confirmPassword)) {
-            System.out.println("*****************************************");
-            System.out.println("⚠️ Error: Passwords do not match.");
-            System.out.println("*****************************************");
-            return false; // Trả về false nếu mật khẩu không khớp
-        }
+        try {
+            // Thu thập thông tin từ người dùng
+            Coach newCoach = collectCoachInfo(coachId);
+            
+            // Thêm coach vào hệ thống
+            int success = coachService.addCoach(newCoach);
 
-        String level = Utils.readString("🔹 Enter Level: "); 
-        String addressId = Utils.readString("🔹 Enter Address ID: "); 
-        double salary = Utils.readDouble("🔹 Enter Salary: "); 
+            // Kiểm tra kết quả thêm coach
+            if (success > 0) {
+                System.out.println("✅ Coach registered successfully!");
+                return true;
+            } else {
+                System.out.println("⚠️ Error: Could not register the coach. Please try again.");
+                return false;
+            }
 
-        // Tạo đối tượng Coach mới
-        Coach newCoach = new Coach(fullName, gender, role, email, phone, citizenIdentification, 
-                                   height, weight, birthday, coachId, password, level, addressId, salary);
-
-        // Thêm coach vào hệ thống
-        int success = coachService.addCoach(newCoach); 
-
-        // Kiểm tra kết quả thêm coach
-        if (success > 0) {
-            System.out.println("*****************************************");
-            System.out.println("✅ Coach registered successfully!");
-            System.out.println("*****************************************");
-            return true; // Trả về true nếu thêm thành công
-        } else {
-            System.out.println("*********************************************************");
-            System.out.println("⚠️ Error: Could not register the coach. Please try again.");
-            System.out.println("*********************************************************");
-            return false; // Trả về false nếu có lỗi
+        } catch (Exception e) {
+            System.out.println("⚠️ Error: " + e.getMessage());
+            return false;
         }
     }
+
+    // Kiểm tra trùng lặp ID
+    private boolean isCoachIdDuplicate(String coachId) {
+        return coachService.getCoachById(coachId) != null;
+    }
+
+    // Phương thức thu thập thông tin
+    private Coach collectCoachInfo(String coachId) {
+        String fullName = Utils.readName("🔹 Enter Full Name: ");
+        String gender = Utils.readString("🔹 Enter Gender: ");
+        String role = Utils.readString("🔹 Enter Role: ");
+        String email = Utils.readEmail("🔹 Enter Email: ");
+        String phone = Utils.readPhone("🔹 Enter Phone: ");
+        String citizenIdentification = Utils.readCitizenIdentification("🔹 Enter Citizen Identification: ");
+        int height = Utils.readInt("🔹 Enter Height (in cm): ");
+        double weight = Utils.readPositiveDouble("🔹 Enter Weight (in kg): ");
+        LocalDate birthday = Utils.readDate("🔹 Enter Birthday (yyyy-MM-dd): ");
+
+        // Xác nhận mật khẩu
+        String password = promptForPassword();
+
+        String level = Utils.readString("🔹 Enter Level: ");
+        String addressId = Utils.readString("🔹 Enter Address ID: ");
+        double salary = Utils.readDouble("🔹 Enter Salary: ");
+
+        // Tạo và trả về đối tượng Coach
+        return new Coach(fullName, gender, role, email, phone, citizenIdentification,
+                         height, weight, birthday, coachId, password, level, addressId, salary);
+    }
+
+    // Nhập và xác nhận mật khẩu
+    private String promptForPassword() {
+        String password;
+        String confirmPassword;
+        do {
+            password = Utils.readPassword("🔹 Enter Password: ");
+            confirmPassword = Utils.readPassword("🔹 Confirm Password: ");
+            if (!password.equals(confirmPassword)) {
+                System.out.println("⚠️ Error: Passwords do not match. Please try again.");
+            }
+        } while (!password.equals(confirmPassword));
+        return password;
+    }
+
 
 
 
  // Xóa Coach
     public boolean deleteCoach() {
-        Scanner scanner = new Scanner(System.in);
         
-        System.out.print("Enter Coach ID to delete: ");
-        String coachId = scanner.nextLine();
-
+        
+        String coachId = Utils.readCoachId("Enter Coach ID to Delete: ");
         // Kiểm tra xem Coach có tồn tại không và xóa
         if (coachService.deleteCoach(coachId)>0) {
             return true;
@@ -214,183 +244,109 @@ public class BossController {
 
 
     public boolean updateCoach() {
-    	
-    	String coachID =  Utils.readString("Enter Coach ID: ");
+        String coachID = Utils.readString("🆔 Enter Coach ID: ");
         Coach coach = coachService.getCoachById(coachID);
-        if (coach != null) {
-            Scanner scanner = new Scanner(System.in);
-            
-            // Hiển thị thông tin coach trước khi chỉnh sửa
-            System.out.println("Current Coach Information:");
-            System.out.println(String.format("ID: %s | Name: %s | Gender: %s | Role: %s | Email: %s | Phone: %s | Citizen ID: %s | Height: %d | Weight: %.2f | Birthday: %s | Level: %s | Address ID: %s | Salary: %.2f",
-                    coach.getCoachId(), coach.getFullName(), coach.getGender(), coach.getRole(), 
-                    coach.getEmail(), coach.getPhone(), coach.getCitizenIdentification(), 
-                    coach.getHeight(), coach.getWeight(), coach.getBirthday(), 
-                    coach.getLevel(), coach.getAddressId(), coach.getSalary()));
-            
-            boolean isUpdating = true;
 
-            while (isUpdating) {
-                System.out.println("\nSelect the attribute to update:");
-                System.out.println("1. Full Name");
-                System.out.println("2. Gender");
-                System.out.println("3. Role");
-                System.out.println("4. Email");
-                System.out.println("5. Phone");
-                System.out.println("6. Citizen Identification");
-                System.out.println("7. Height");
-                System.out.println("8. Weight");
-                System.out.println("9. Birthday");
-                System.out.println("10. Level");
-                System.out.println("11. Address ID");
-                System.out.println("12. Salary");
-                System.out.println("13. Exit");
-
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline character
-
-                switch (choice) {
-                    case 1:
-                        
-                        String fullName = Utils.readName("Enter new Full Name: ");
-                        coach.setFullName(fullName);
-                        break;
-                    case 2:
-                        System.out.print("Enter new Gender: ");
-                        String gender = scanner.nextLine();
-                        coach.setGender(gender);
-                        break;
-                    case 3:
-                        System.out.print("Enter new Role: ");
-                        String role = scanner.nextLine();
-                        coach.setRole(role);
-                        break;
-                    case 4:
-                        System.out.print("Enter new Email: ");
-                        String email = scanner.nextLine();
-                        coach.setEmail(email);
-                        break;
-                    case 5:
-                        System.out.print("Enter new Phone: ");
-                        String phone = scanner.nextLine();
-                        coach.setPhone(phone);
-                        break;
-                    case 6:
-                        System.out.print("Enter new Citizen Identification: ");
-                        String citizenId = scanner.nextLine();
-                        coach.setCitizenIdentification(citizenId);
-                        break;
-                    case 7:
-                        System.out.print("Enter new Height: ");
-                        int height = scanner.nextInt();
-                        coach.setHeight(height);
-                        break;
-                    case 8:
-                        System.out.print("Enter new Weight: ");
-                        double weight = scanner.nextDouble();
-                        coach.setWeight(weight);
-                        break;
-                    case 9:
-                        System.out.print("Enter new Birthday (yyyy-MM-dd): ");
-                        LocalDate birthday = LocalDate.parse(scanner.nextLine());
-                        coach.setBirthday(birthday);
-                        break;
-                    case 10:
-                        System.out.print("Enter new Level: ");
-                        String level = scanner.nextLine();
-                        coach.setLevel(level);
-                        break;
-                    case 11:
-                        System.out.print("Enter new Address ID: ");
-                        String addressId = scanner.nextLine();
-                        coach.setAddressId(addressId);
-                        break;
-                    case 12:
-                        System.out.print("Enter new Salary: ");
-                        double salary = scanner.nextDouble();
-                        coach.setSalary(salary);
-                        break;
-                    case 13:
-                        isUpdating = false; // Thoát khỏi vòng lặp
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-
-                // Cập nhật Coach sau mỗi lần chỉnh sửa
-                if (choice >= 1 && choice <= 12) {
-                    coachService.updateCoach(coach);
-                    return true;
-                }
-            }
-        } else {
-          return false;
+        if (coach == null) {
+            System.out.println("❌ Coach not found.");
+            return false;
         }
-		return false;
+
+        // Display current coach details
+        System.out.println("\n===== 🏋️ Current Coach Information 🏋️ =====");
+        System.out.printf("🆔 ID: %s%n👤 Name: %s%n🧑‍⚖️ Gender: %s%n📝 Role: %s%n📧 Email: %s%n📞 Phone: %s%n🔐 Citizen ID: %s%n📏 Height: %d cm%n⚖️ Weight: %.2f kg%n🎂 Birthday: %s%n🎓 Level: %s%n🏠 Address ID: %s%n💰 Salary: %.2f%n",
+                coach.getCoachId(), coach.getFullName(), coach.getGender(), coach.getRole(), 
+                coach.getEmail(), coach.getPhone(), coach.getCitizenIdentification(), 
+                coach.getHeight(), coach.getWeight(), coach.getBirthday(), 
+                coach.getLevel(), coach.getAddressId(), coach.getSalary());
+        System.out.println("==========================================\n");
+
+        // Map actions to user choices
+        Map<Integer, Runnable> updateActions = new HashMap<>();
+        updateActions.put(1, () -> coach.setFullName(Utils.readName("✏️ Enter new Full Name: ")));
+        updateActions.put(2, () -> coach.setGender(Utils.readString("✏️ Enter new Gender: ")));
+        updateActions.put(3, () -> coach.setEmail(Utils.readEmail("✏️ Enter new Email: ")));
+        updateActions.put(4, () -> coach.setPhone(Utils.readPhone("✏️ Enter new Phone: ")));
+        updateActions.put(5, () -> coach.setCitizenIdentification(Utils.readCitizenIdentification("✏️ Enter new Citizen ID: ")));
+        updateActions.put(6, () -> coach.setHeight(Utils.readInt("✏️ Enter new Height (cm): ")));
+        updateActions.put(7, () -> coach.setWeight(Utils.readPositiveDouble("✏️ Enter new Weight (kg): ")));
+        updateActions.put(8, () -> coach.setBirthday(Utils.readDate("✏️ Enter new Birthday (yyyy-MM-dd): ")));
+        updateActions.put(9, () -> coach.setLevel(Utils.readString("✏️ Enter new Level: ")));
+        updateActions.put(10, () -> coach.setAddressId(Utils.readString("✏️ Enter new Address ID: ")));
+        updateActions.put(11, () -> coach.setSalary(Utils.readDouble("✏️ Enter new Salary: ")));
+
+        boolean isUpdating = true;
+        boolean hasUpdated = false;
+
+        while (isUpdating) {
+            System.out.println("\n🌟 Select the attribute to update:");
+            System.out.println("------------------------------------------");
+            System.out.println("1️⃣  Full Name\n2️⃣  Gender\n3️⃣  Email\n4️⃣  Phone\n5️⃣  Citizen ID");
+            System.out.println("6️⃣  Height\n7️⃣  Weight\n8️⃣  Birthday\n9️⃣  Level\n🔟  Address ID");
+            System.out.println("1️⃣1️⃣ Salary\n1️⃣2️⃣ Exit");
+            System.out.println("------------------------------------------");
+
+            int choice = Utils.readInt("👉 Enter your choice to continue: ");
+            
+            if (choice == 12) {
+                isUpdating = false;
+            } else if (updateActions.containsKey(choice)) {
+                updateActions.get(choice).run();
+                hasUpdated = true;
+                System.out.println("✅ Attribute updated successfully.");
+            } else {
+                System.out.println("❌ Invalid choice. Please try again.");
+            }
+        }
+
+        if (hasUpdated) {
+            coachService.updateCoach(coach);
+            System.out.println("\n💾 Coach details updated successfully!");
+            return true;
+        }
+
+        System.out.println("⚠️ No changes were made.");
+        return false;
     }
 
-
- // Thêm mới Trainee
     public boolean addTrainee() {
-        Scanner scanner = new Scanner(System.in);
-        
-        System.out.print("Enter Trainee ID: ");
-        String traineeId = scanner.nextLine();
-        
-        // Kiểm tra xem trainee có tồn tại không (giả sử bạn có một phương thức để kiểm tra)
+        String traineeId = Utils.generateTraineeId();
+
+        // Check if the trainee already exists
         if (traineeService.getTraineeById(traineeId) != null) {
-            System.out.println("Trainee with this ID already exists!");
-            return false; // Trả về false nếu trainee đã tồn tại
+            System.out.println("❌ Trainee with ID '" + traineeId + "' already exists!");
+            return false; // Return false if trainee already exists
         }
+
+        // Collecting trainee information
+        System.out.println("\n📋 Enter Trainee Information:");
+        String fullName = Utils.readName("👤 Enter Trainee Full Name: ");
+        String gender = Utils.readString("🔢 Enter Trainee Gender: ");
+        String role = "TRAINEE";
+        String email = Utils.readEmail("📧 Enter Trainee Email: ");
+        String phone = Utils.readPhone("📞 Enter Trainee Phone Number: ");
+        LocalDate birthday = Utils.readDate("🎂 Enter Birthday (yyyy-MM-dd): ");
+        String citizenIdentification = Utils.readCitizenIdentification("🔑 Enter Citizen Identification: ");
+        int height = Utils.readInt("📏 Enter Trainee Height (cm): ");
+        double weight = Utils.readPositiveDouble("⚖️ Enter Trainee Weight (kg): ");
         
-        System.out.print("Enter Full Name: ");
-        String fullName = scanner.nextLine();
-        
-        System.out.print("Enter Gender: ");
-        String gender = scanner.nextLine();
-        
-        System.out.print("Enter Role: ");
-        String role = scanner.nextLine();
-        
-        System.out.print("Enter Email: ");
-        String email = scanner.nextLine();
-        
-        System.out.print("Enter Phone: ");
-        String phone = scanner.nextLine();
-        
-        System.out.print("Enter Birthday (yyyy-MM-dd): ");
-        LocalDate birthday = LocalDate.parse(scanner.nextLine());
-        
-        System.out.print("Enter Citizen Identification: ");
-        String citizenIdentification = scanner.nextLine();
-        
-        System.out.print("Enter Height: ");
-        int height = scanner.nextInt();
-        
-        System.out.print("Enter Weight: ");
-        double weight = scanner.nextDouble();
-        
-        System.out.print("Enter Password: ");
-        String password = scanner.next(); // Giả sử không có khoảng trắng trong mật khẩu
-        
-        System.out.print("Enter Level: ");
-        String level = scanner.next();
-        
-        System.out.print("Enter Address ID: ");
-        String addressId = scanner.nextLine();
-        
-        Trainee newTrainee = new Trainee(fullName, gender, role, email, phone, birthday, 
-                                           citizenIdentification, height, weight, 
-                                           traineeId, password, level, addressId);
-                                           
-        int success = traineeService.addTrainee(newTrainee); // Giả sử phương thức này trả về true/false
-        
-        if (success > 0) {
-            System.out.println("Trainee added successfully!");
-            return true; // Trả về true nếu thêm thành công
+        // Using a method for password entry
+        String password = Utils.readPassword("🔒 Enter Trainee Password: ");
+        String level = Utils.readString("🌟 Enter Trainee Level: ");
+        String addressId = Utils.generateAddressId(); // Generate address ID automatically
+
+        // Create the new Trainee object
+        Trainee newTrainee = new Trainee(fullName, gender, role, email, phone, 
+                                           birthday, citizenIdentification, height, 
+                                           weight, traineeId, password, level, addressId);
+
+        // Attempt to add the trainee
+        if (traineeService.addTrainee(newTrainee) > 0) {
+            System.out.println("✅ Trainee added successfully!");
+            return true; // Return true if added successfully
         } else {
-            System.out.println("Failed to add trainee.");
-            return false; // Trả về false nếu có lỗi
+            System.out.println("❌ Failed to add trainee. Please check your input.");
+            return false; // Return false if there was an error
         }
     }
 
@@ -406,226 +362,217 @@ public class BossController {
         }
     }
 
-    // Cập nhật Trainee
     public boolean updateTrainee() {
-    	String traineeId = Utils.readString("Enter Trainee ID: ");
+        String traineeId = Utils.readString("📇 Enter Trainee ID: ");
         Trainee trainee = traineeService.getTraineeById(traineeId);
-        if (trainee != null) {
-            Scanner scanner = new Scanner(System.in);
-            
-            // Hiển thị thông tin trainee trước khi chỉnh sửa
-            System.out.println("Current Trainee Information:");
-            System.out.println(String.format("ID: %s | Name: %s | Gender: %s | Role: %s | Email: %s | Phone: %s | Citizen ID: %s | Height: %d | Weight: %.2f | Birthday: %s",
-                    trainee.getTraineeId(), trainee.getFullName(), trainee.getGender(), 
-                    trainee.getRole(), trainee.getEmail(), trainee.getPhone(), 
-                    trainee.getCitizenIdentification(), trainee.getHeight(), 
-                    trainee.getWeight(), trainee.getBirthday()));
-            
-            boolean isUpdating = true;
-
-            while (isUpdating) {
-                System.out.println("\nSelect the attribute to update:");
-                System.out.println("1. Full Name");
-                System.out.println("2. Gender");
-                System.out.println("3. Role");
-                System.out.println("4. Email");
-                System.out.println("5. Phone");
-                System.out.println("6. Citizen Identification");
-                System.out.println("7. Height");
-                System.out.println("8. Weight");
-                System.out.println("9. Birthday");
-                System.out.println("10. Level");
-                System.out.println("11. Address ID");
-                System.out.println("12. Exit");
-
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline character
-
-                switch (choice) {
-                    case 1:
-                        System.out.print("Enter new Full Name: ");
-                        String fullName = scanner.nextLine();
-                        trainee.setFullName(fullName);
-                        break;
-                    case 2:
-                        System.out.print("Enter new Gender: ");
-                        String gender = scanner.nextLine();
-                        trainee.setGender(gender);
-                        break;
-                    case 3:
-                        System.out.print("Enter new Role: ");
-                        String role = scanner.nextLine();
-                        trainee.setRole(role);
-                        break;
-                    case 4:
-                        System.out.print("Enter new Email: ");
-                        String email = scanner.nextLine();
-                        trainee.setEmail(email);
-                        break;
-                    case 5:
-                        System.out.print("Enter new Phone: ");
-                        String phone = scanner.nextLine();
-                        trainee.setPhone(phone);
-                        break;
-                    case 6:
-                        System.out.print("Enter new Citizen Identification: ");
-                        String citizenId = scanner.nextLine();
-                        trainee.setCitizenIdentification(citizenId);
-                        break;
-                    case 7:
-                        System.out.print("Enter new Height: ");
-                        int height = scanner.nextInt();
-                        trainee.setHeight(height);
-                        break;
-                    case 8:
-                        System.out.print("Enter new Weight: ");
-                        double weight = scanner.nextDouble();
-                        trainee.setWeight(weight);
-                        break;
-                    case 9:
-                        System.out.print("Enter new Birthday (yyyy-MM-dd): ");
-                        LocalDate birthday = LocalDate.parse(scanner.nextLine());
-                        trainee.setBirthday(birthday);
-                        break;
-                    case 10:
-                        System.out.print("Enter new Level: ");
-                        String level = scanner.nextLine();
-                        trainee.setLevel(level);
-                        break;
-                    case 11:
-                        System.out.print("Enter new Address ID: ");
-                        String addressId = scanner.nextLine();
-                        trainee.setAddressId(addressId);
-                        break;
-                    case 12:
-                        isUpdating = false; // Thoát khỏi vòng lặp
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-
-                // Cập nhật Trainee sau mỗi lần chỉnh sửa
-                if (choice >= 1 && choice <= 11) {
-                    traineeService.updateTrainee(trainee);
-                    System.out.println("Trainee updated successfully.");
-                }
-            }
-        } else {
-            System.out.println("Trainee not found.");
+        
+        if (trainee == null) {
+            System.out.println("❌ Trainee not found.");
+            return false; // Return false if trainee does not exist
         }
-		return false;
+
+        // Display current trainee information
+        displayCurrentTraineeInfo(trainee);
+
+        // Update trainee attributes
+        boolean isUpdating = true;
+
+        while (isUpdating) {
+            isUpdating = updateTraineeAttributes(trainee);
+        }
+
+        return true; // Return true after successful updates
     }
 
-    // Thêm mới Course
-    public boolean createCourse() {
-        Scanner scanner = new Scanner(System.in);
+    private void displayCurrentTraineeInfo(Trainee trainee) {
+        System.out.println("\n📋 Current Trainee Information:");
+        System.out.println(String.format("ID: %s | Name: %s | Gender: %s | Role: %s | Email: %s | Phone: %s | Citizen ID: %s | Height: %d cm | Weight: %.2f kg | Birthday: %s",
+                trainee.getTraineeId(), trainee.getFullName(), trainee.getGender(),
+                trainee.getRole(), trainee.getEmail(), trainee.getPhone(),
+                trainee.getCitizenIdentification(), trainee.getHeight(),
+                trainee.getWeight(), trainee.getBirthday()));
+    }
 
-        // Hiển thị danh sách các Coach và yêu cầu người dùng chọn
-        System.out.println("List of Coaches:");
-        List<Coach> coaches = coachService.getAllCoaches(); // Giả định bạn có phương thức này
-        if (coaches.isEmpty()) {
-            System.out.println("No coaches available. Please add a coach first.");
-            return false;
+    private boolean updateTraineeAttributes(Trainee trainee) {
+        System.out.println("\n🔄 Select the attribute to update:");
+        System.out.println("1. Full Name");
+        System.out.println("2. Gender");
+        System.out.println("3. Role");
+        System.out.println("4. Email");
+        System.out.println("5. Phone");
+        System.out.println("6. Citizen Identification");
+        System.out.println("7. Height (cm)");
+        System.out.println("8. Weight (kg)");
+        System.out.println("9. Birthday (yyyy-MM-dd)");
+        System.out.println("10. Level");
+        System.out.println("11. Address ID");
+        System.out.println("12. Exit");
+
+        int choice = Utils.readInt("👉 Your choice: ");
+
+        switch (choice) {
+            case 1:
+                trainee.setFullName(Utils.readString("Enter new Full Name: "));
+                break;
+            case 2:
+                trainee.setGender(Utils.readString("Enter new Gender: "));
+                break;
+            case 3:
+                trainee.setRole(Utils.readString("Enter new Role: "));
+                break;
+            case 4:
+                trainee.setEmail(Utils.readEmail("Enter new Email: "));
+                break;
+            case 5:
+                trainee.setPhone(Utils.readPhone("Enter new Phone: "));
+                break;
+            case 6:
+                trainee.setCitizenIdentification(Utils.readString("Enter new Citizen Identification: "));
+                break;
+            case 7:
+                trainee.setHeight(Utils.readInt("Enter new Height (cm): "));
+                break;
+            case 8:
+                trainee.setWeight(Utils.readPositiveDouble("Enter new Weight (kg): "));
+                break;
+            case 9:
+                LocalDate birthday = Utils.readDate("Enter new Birthday (yyyy-MM-dd): ");
+                trainee.setBirthday(birthday);
+                break;
+            case 10:
+                trainee.setLevel(Utils.readString("Enter new Level: "));
+                break;
+            case 11:
+                trainee.setAddressId(Utils.readString("Enter new Address ID: "));
+                break;
+            case 12:
+                return false; // Exit the update loop
+            default:
+                System.out.println("❌ Invalid choice. Please try again.");
+                return true; // Stay in the loop for a valid choice
         }
 
-        // Hiển thị danh sách Coach
+        // Update the trainee in the service after each change
+        traineeService.updateTrainee(trainee);
+        System.out.println("✅ Trainee updated successfully.");
+        
+        return true; // Continue updating
+    }
+
+ // Thêm mới Course
+    public boolean createCourse() {
+       
+        
+        // Hiển thị danh sách các Coach và yêu cầu người dùng chọn
+        List<Coach> coaches = coachService.getAllCoaches();
+        if (!displayCoaches(coaches)) {
+            return false; // Không có coach nào
+        }
+
+        String coachId = Utils.readString("Enter Coach ID: ");
+        if (!isValidCoach(coachId, coaches)) {
+            return false; // Coach ID không hợp lệ
+        }
+
+        String courseName = Utils.readString("Enter Course Name: ");
+        String description = Utils.readString("Enter Course Description: ");
+        String courseType = Utils.readString("Enter Course Type: ");
+        LocalDate startDate = Utils.readDate("Enter Course Start Date (yyyy-MM-dd): ");
+        LocalDate endDate = Utils.readDate("Enter Course End Date (yyyy-MM-dd): ");
+        double price = Utils.readDouble("Enter Course Price: ");
+        int maxParticipants = Utils.readInt("Enter Max Participants: ");
+        int totalSessions = Utils.readInt("Enter Total Sessions: ");
+
+        Course newCourse = new Course(generateCourseId(), courseName, description, coachId, courseType, maxParticipants, startDate, endDate, price, totalSessions);
+        
+        // Tạo lịch tập cho khóa học
+        createSchedules(newCourse);
+        
+        // Tạo TakeWorkout cho khóa học
+        createTakeWorkouts(newCourse);
+        
+        // Thêm khóa học vào CourseService
+        if (courseService.addCourse(newCourse) > 1) {
+            System.out.println("✅ Course created successfully!");
+            return true;
+        }
+        
+        System.out.println("❌ Failed to create the course.");
+        return false;
+    }
+
+    // Hiển thị danh sách các Coach
+    private boolean displayCoaches(List<Coach> coaches) {
+        if (coaches.isEmpty()) {
+            System.out.println("🚫 No coaches available. Please add a coach first.");
+            return false;
+        }
+        
         System.out.printf("%-10s %-20s %-10s %-10s%n", "ID", "Name", "Level", "Phone");
         System.out.println("-------------------------------------------------");
         for (Coach coach : coaches) {
-            System.out.printf("%-10s %-20s %-10s %-10s%n", coach.getCoachId(), coach.getFullName(), 
-                              coach.getLevel(), coach.getPhone());
+            System.out.printf("%-10s %-20s %-10s %-10s%n", 
+                              coach.getCoachId(), 
+                              coach.getFullName(), 
+                              coach.getLevel(), 
+                              coach.getPhone());
         }
+        return true;
+    }
 
-        System.out.print("Enter Coach ID: ");
-        String coachId = scanner.nextLine();
+    // Kiểm tra Coach ID hợp lệ
+    private boolean isValidCoach(String coachId, List<Coach> coaches) {
+        return coaches.stream().anyMatch(coach -> coach.getCoachId().equals(coachId));
+    }
 
-        // Kiểm tra xem coachId có hợp lệ không
-        if (coaches.stream().noneMatch(coach -> coach.getCoachId().equals(coachId))) {
-            System.out.println("Invalid Coach ID. Please try again.");
-            return false;
-        }
-
-        System.out.print("Enter Course Name: ");
-        String courseName = scanner.nextLine();
-
-        System.out.print("Enter Course Description: ");
-        String description = scanner.nextLine();
-
-        System.out.print("Enter Course Type: ");
-        String courseType = scanner.nextLine();
-
-        System.out.print("Enter Course Start Date (yyyy-MM-dd): ");
-        LocalDate startDate = LocalDate.parse(scanner.nextLine());
-
-        System.out.print("Enter Course End Date (yyyy-MM-dd): ");
-        LocalDate endDate = LocalDate.parse(scanner.nextLine());
-
-        System.out.print("Enter Course Price: ");
-        double price = scanner.nextDouble();
-
-        System.out.print("Enter Max Participants: ");
-        int maxParticipants = scanner.nextInt();
-        scanner.nextLine(); // Consume newline character
-
-        int totalSessions = Utils.readInt("Enter Total Sessions: ");
-
-        Course newCourse = new Course(generateCourseId(), courseName, description, coachId, courseType, maxParticipants,
-                startDate, endDate, price, totalSessions);
-
-        // Tạo lịch tập cho khóa học
+    // Tạo lịch cho khóa học
+    private void createSchedules(Course course) {
         List<Schedule> schedules = new ArrayList<>();
-        System.out.print("Enter number of schedules for this course: ");
-        int numSchedules = scanner.nextInt();
-        scanner.nextLine(); // Consume newline character
-
+        int numSchedules = Utils.readInt("Enter number of schedules for this course: ");
+        
         for (int i = 0; i < numSchedules; i++) {
-            System.out.print("Enter Schedule Date (yyyy-MM-dd): ");
-            LocalDate date = LocalDate.parse(scanner.nextLine());
-
-            System.out.print("Enter Start Time (HH:mm): ");
-            LocalTime startTime = LocalTime.parse(scanner.nextLine());
-
-            System.out.print("Enter End Time (HH:mm): ");
-            LocalTime endTime = LocalTime.parse(scanner.nextLine());
-
-            Schedule schedule = new Schedule(generateScheduleId(), newCourse.getCourseId(), date, startTime, endTime);
+            LocalDate date = Utils.readDate("Enter Schedule Date (yyyy-MM-dd): ");
+            LocalTime startTime = Utils.readTime("Enter Start Time (HH:mm): ");
+            LocalTime endTime = Utils.readTime("Enter End Time (HH:mm): ");
+            
+            Schedule schedule = new Schedule(generateScheduleId(), course.getCourseId(), date, startTime, endTime);
             schedules.add(schedule);
-            scheduleService.addSchedule(schedule); // Thêm vào danh sách ScheduleService
+            scheduleService.addSchedule(schedule);
         }
+    }
 
-        // Tạo TakeWorkout cho khóa học
+    // Tạo TakeWorkout cho khóa học
+    private void createTakeWorkouts(Course course) {
         List<TakeWorkout> takeWorkouts = new ArrayList<>();
-
-        // Hiển thị workout
-        System.out.println("Available Workouts:");
-        List<Workout> workouts = workoutService.getAllWorkouts(); // Giả định bạn có phương thức này
-        System.out.printf("%-10s %-20s %-10s %-10s %-30s %-20s%n", "ID", "Name", "Duration", "Level", "Instruction",
-                "Equipment");
-        System.out.println("-------------------------------------------------------------");
-        for (Workout workout : workouts) {
-            System.out.printf("%-10s %-20s %-10d %-10s %-30s %-20s%n", workout.getWorkoutId(), workout.getWorkoutName(),
-                    workout.getDuration(), workout.getLevel(), workout.getInstruction(),
-                    workout.getEquipmentRequired());
-        }
-
-        // Tạo TakeWorkout
-        System.out.print("Enter Workout IDs for this course (separated by commas): ");
-        String workoutIdsInput = scanner.nextLine();
+        
+        System.out.println("📋 Available Workouts:");
+        List<Workout> workouts = workoutService.getAllWorkouts();
+        displayWorkouts(workouts);
+        
+        String workoutIdsInput = Utils.readString("Enter Workout IDs for this course (separated by commas): ");
         String[] workoutIds = workoutIdsInput.split(",");
-
+        
         for (String workoutId : workoutIds) {
-            workoutId = workoutId.trim(); // Loại bỏ khoảng trắng
-            TakeWorkout takeWorkout = new TakeWorkout(newCourse.getCourseId(), workoutId);
+            workoutId = workoutId.trim();
+            TakeWorkout takeWorkout = new TakeWorkout(course.getCourseId(), workoutId);
             takeWorkouts.add(takeWorkout);
             takeWorkoutService.addTakeWorkout(takeWorkout);
         }
-        
-        // Thêm khóa học vào CourseService
-        if(courseService.addCourse(newCourse)> 1) {
-        	return true;
+    }
+
+    // Hiển thị danh sách các Workout
+    private void displayWorkouts(List<Workout> workouts) {
+        System.out.printf("%-10s %-20s %-10s %-10s %-30s %-20s%n", "ID", "Name", "Duration", "Level", "Instruction", "Equipment");
+        System.out.println("-------------------------------------------------------------");
+        for (Workout workout : workouts) {
+            System.out.printf("%-10s %-20s %-10d %-10s %-30s %-20s%n", 
+                              workout.getWorkoutId(), 
+                              workout.getWorkoutName(),
+                              workout.getDuration(), 
+                              workout.getLevel(), 
+                              workout.getInstruction(),
+                              workout.getEquipmentRequired());
         }
-       
-        return true;
     }
 
 
@@ -676,57 +623,48 @@ public class BossController {
         System.out.print("Enter your choice (1-9): ");
         int choice = scanner.nextInt();
         scanner.nextLine(); // Consume newline character
-
         switch (choice) {
-            case 1:
-                System.out.print("Enter new Course Name: ");
-                String newCourseName = scanner.nextLine();
-                course.setCourseName(newCourseName);
-                break;
-            case 2:
-                System.out.print("Enter new Description: ");
-                String newDescription = scanner.nextLine();
-                course.setCourseDescription(newDescription);
-                break;
-            case 3:
-                
-                String newCoachId = Utils.readCoachId("Enter new Coach ID:");
-                course.setCoachID(newCoachId);
-                break;
-            case 4:
-                System.out.print("Enter new Course Type: ");
-                String newCourseType = scanner.nextLine();
-                course.setCourseType(newCourseType);
-                break;
-            case 5:
-                System.out.print("Enter new Max Participants: ");
-                int newMaxParticipants = scanner.nextInt();
-                course.setMaxParticipants(newMaxParticipants);
-                break;
-            case 6:
-                System.out.print("Enter new Start Date (yyyy-MM-dd): ");
-                LocalDate newStartDate = LocalDate.parse(scanner.nextLine());
-                course.setStartDate(newStartDate);
-                break;
-            case 7:
-                System.out.print("Enter new End Date (yyyy-MM-dd): ");
-                LocalDate newEndDate = LocalDate.parse(scanner.nextLine());
-                course.setEndDate(newEndDate);
-                break;
-            case 8:
-                System.out.print("Enter new Price: ");
-                double newPrice = scanner.nextDouble();
-                course.setPrice(newPrice);
-                break;
-            case 9:
-                System.out.print("Enter new Total Sessions: ");
-                int newTotalSessions = scanner.nextInt();
-                course.setTotalSessions(newTotalSessions);
-                break;
-            default:
-                System.out.println("Invalid choice. No updates made.");
-                return false;
-        }
+        case 1:
+            String newCourseName = Utils.readString("Enter new Course Name: ");
+            course.setCourseName(newCourseName);
+            break;
+        case 2:
+            String newDescription = Utils.readString("Enter new Description: ");
+            course.setCourseDescription(newDescription);
+            break;
+        case 3:
+            String newCoachId = Utils.readCoachId("Enter new Coach ID: ");
+            course.setCoachID(newCoachId);
+            break;
+        case 4:
+            String newCourseType = Utils.readString("Enter new Course Type: ");
+            course.setCourseType(newCourseType);
+            break;
+        case 5:
+            int newMaxParticipants = Utils.readInt("Enter new Max Participants: ");
+            course.setMaxParticipants(newMaxParticipants);
+            break;
+        case 6:
+            LocalDate newStartDate = Utils.readDate("Enter new Start Date (yyyy-MM-dd): ");
+            course.setStartDate(newStartDate);
+            break;
+        case 7:
+            LocalDate newEndDate = Utils.readDate("Enter new End Date (yyyy-MM-dd): ");
+            course.setEndDate(newEndDate);
+            break;
+        case 8:
+            double newPrice = Utils.readPositiveDouble("Enter new Price: ");
+            course.setPrice(newPrice);
+            break;
+        case 9:
+            int newTotalSessions = Utils.readInt("Enter new Total Sessions: ");
+            course.setTotalSessions(newTotalSessions);
+            break;
+        default:
+            System.out.println("Invalid choice. No updates made.");
+            return false;
+    }
+
 
         // Cập nhật thông tin khóa học
         courseService.updateCourse(course);

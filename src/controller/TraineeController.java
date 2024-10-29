@@ -5,10 +5,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.time.DayOfWeek;
 
+import java.time.temporal.TemporalAdjusters;
 import model.Coach;
 import model.Course;
 import model.EnrollCourse;
@@ -16,6 +20,7 @@ import model.Feedback;
 import model.Note;
 import model.Schedule;
 import model.Trainee;
+import service.AddressService;
 import service.CoachService;
 import service.CourseService;
 import service.EnrollCourseService;
@@ -23,26 +28,35 @@ import service.FeedbackService;
 import service.NoteService;
 import service.ScheduleService;
 import service.TraineeService;
+import utils.Utils;
 
 public class TraineeController {
 	ScheduleService scheduleService = new ScheduleService();
-	TraineeService traineeServic = new TraineeService();
+	TraineeService traineeService = new TraineeService();
 	CourseService courseService = new CourseService();
 	CoachService coachService = new CoachService();
 	FeedbackService feedbackService = new FeedbackService();
-
+    EnrollCourseService enrollCourseService = new EnrollCourseService();
+    AddressService addressService = new AddressService();
+    CourseController courseController = new CourseController();
 	
-	// Lấy ra Trainee
-	public Trainee getTrainee(String traineeID) {
-		for (Trainee trainee : TraineeService.traineeList) {
-			if (trainee.getTraineeId().equals(traineeID)) {
-				return trainee;
-			}
-
-		}
-		return null;
+	/**
+	 * 
+	 */
+	public TraineeController() {
+		super();
 	}
-    
+
+
+	public String getTrainee(String traineeID) {
+	    Trainee trainee = traineeService.getTraineeById(traineeID);
+	    if (trainee == null) {
+	        return "Trainee not found.";
+	    }
+	    String address = addressService.getAddressById(trainee.getAddressId()).toString();
+	    return trainee.toString()  + address.toString();
+	}
+
 	
 	// Lấy ra danh sách course Enroll
 	public ArrayList<Course> getCoursesEnrolled(String traineeId) {
@@ -56,7 +70,7 @@ public class TraineeController {
 		for (EnrollCourse enrollCourse : EnrollCourseService.enrollCourseCache) {
 			if (enrollCourse != null && traineeId.equals(enrollCourse.getTraineeId())) {
 				Course course = courseService.getCourseById(enrollCourse.getCourseId());
-
+                
 				if (course != null) {
 					enrolledCourses.add(course);
 				}
@@ -78,10 +92,14 @@ public class TraineeController {
 			String coachName = (coach != null) ? coach.getFullName() : "Unknown Coach";
 
 			// Format the course information
-			String courseInfo = String.format("|%-10s| %-20s| %-30s| %-10s| %-20s| %-15s| %-15s| $%-10.2f|",
-					course.getCourseId(), course.getCourseName(), course.getCourseDescription(), course.getCourseType(),
-					coachName, (course.getStartDate() != null) ? course.getStartDate().toString() : "N/A",
-					(course.getEndDate() != null) ? course.getEndDate().toString() : "N/A", course.getPrice());
+			String courseInfo = String.format("| %-10s | %-30s | %-50s | %-20s | %-20s | %20s | $%-10.2f|",
+					course.getCourseId(),
+					coachName ,
+					course.getCourseDescription(), 
+					course.getCourseType(), 
+					(course.getStartDate() != null) ? course.getStartDate().toString() : "N/A",
+					(course.getEndDate() != null) ? course.getEndDate().toString() : "N/A",
+					course.getPrice());
 
 			// Add formatted string to the result list
 			result.add(courseInfo);
@@ -90,117 +108,133 @@ public class TraineeController {
 		return result;
 	}
     
-	// Đăng ký Course
 	public boolean enrollCourse(String traineeId) {
-		// Get the list of courses the trainee has already enrolled in
-		ArrayList<Course> enrolledCourses = getCoursesEnrolled(traineeId);
+	    // Lấy danh sách khóa học học viên đã đăng ký
+	    ArrayList<Course> enrolledCourses = getCoursesEnrolled(traineeId);
 
-		// Get the list of all available courses
-		ArrayList<Course> allCourses = new ArrayList<>(CourseService.courseCache); // Create a copy of courseCache
+	    // Lấy danh sách tất cả các khóa học có sẵn
+	    ArrayList<Course> allCourses = new ArrayList<>(CourseService.courseCache);
 
-		// Subtract the enrolled courses from the list of all courses
-		allCourses.removeAll(enrolledCourses); // allCourses now contains only the courses not enrolled in
+	    // Loại bỏ các khóa học đã đăng ký
+	    allCourses.removeAll(enrolledCourses);
 
-		// Filter out courses that have already started
-		LocalDate today = LocalDate.now();
-		Iterator<Course> courseIterator = allCourses.iterator();
+	    // Loại bỏ các khóa học đã bắt đầu
+	    LocalDate today = LocalDate.now();
+	    allCourses.removeIf(course -> course.getStartDate().isBefore(today));
 
-		while (courseIterator.hasNext()) {
-			Course course = courseIterator.next();
-			if (course.getStartDate().isBefore(today)) {
-				courseIterator.remove(); // Safely remove the course while iterating
-			}
-		}
+	    // Kiểm tra nếu không còn khóa học nào có sẵn
+	    if (allCourses.isEmpty()) {
+	        System.out.println("No courses available for enrollment.");
+	        return false;
+	    }
 
-		// Check if there are available courses
-		if (allCourses.isEmpty()) {
-			System.out.println("No courses available for enrollment.");
-			return false;
-		}
+	    // Hiển thị danh sách các khóa học có sẵn
+	    System.out.printf("|%-10s| %-20s | %-20s | %-15s | %-10s | %-12s | %-12s | %-10s|\n", 
+	                      "CourseID", "Course Name", "Coach Name", "Description", 
+	                      "CourseType", "StartDate", "EndDate", "TotalSections");
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-		// Display the list of available courses
-		System.out.println(String.format("|%-10s| %-20s | %-20s | %-15s | %-10s | %-12s | %-12s | %-10s|", "CourseID",
-				"Course Name", "Coach Name", "Description", "CourseType", "StartDate", "EndDate", "TotalSections"));
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	    for (Course course : allCourses) {
+	        Coach coach = coachService.getCoachById(course.getCoachID());
+	        String coachName = (coach != null) ? coach.getFullName() : "N/A";
 
-		for (Course course : allCourses) {
-			Coach coach = coachService.getCoachById(course.getCoachID());
-			String coachName = coach.getFullName();
+	        System.out.printf("|%-10s| %-20s | %-20s | %-15s | %-10s | %-12s | %-12s | %-10d|\n",
+	                          course.getCourseId(), course.getCourseName(), coachName, 
+	                          course.getCourseDescription(), course.getCourseType(), 
+	                          course.getStartDate().format(formatter),
+	                          course.getEndDate().format(formatter), course.getTotalSessions());
+	    }
 
-			System.out.println(String.format("|%-10s| %-20s | %-20s | %-15s | %-10s | %-12s | %-12s | %-10d|",
-					course.getCourseId(), course.getCourseName(), coachName, course.getCourseDescription(),
-					course.getCourseType(), course.getStartDate().format(formatter),
-					course.getEndDate().format(formatter), course.getTotalSessions()));
-		}
+	    // Yêu cầu người dùng nhập CourseID
+	    String chosenCourseId = Utils.readCourseId("Enter the CourseID you want to enroll in:");
 
-		// Ask user to choose a course by its ID
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Enter the CourseID you want to enroll in: ");
-		String chosenCourseId = scanner.nextLine();
+	    // Kiểm tra tính hợp lệ của CourseID
+	    if (chosenCourseId == null || chosenCourseId.isEmpty()) {
+	        System.out.println("Invalid input. Enrollment failed.");
+	        return false;
+	    }
 
-		// Find the course by its ID
-		for (Course course : allCourses) {
-			if (course.getCourseId().equals(chosenCourseId)) {
-				// Enroll the trainee in the chosen course
-				System.out.println("Enrolling in course: " + course.getCourseName());
-				// Add enrollment logic here (e.g., save to database, register, etc.)
-				return true; // Successful enrollment
-			}
-		}
+	    // Hỏi xác nhận từ người dùng trước khi đăng ký
+	    boolean confirmEnrollment = Utils.readBoolean("Are you sure you want to enroll in this course? (true/false): ");
+	    if (!confirmEnrollment) {
+	        System.out.println("Enrollment canceled by user.");
+	        return false;
+	    }
 
-		// If the course ID is not found
-		System.out.println("Invalid CourseID. Enrollment failed.");
-		return false;
+	    // Xác nhận đăng ký
+	
+	    boolean enrollmentSuccess = courseController.enrollCourse(chosenCourseId, traineeId);
+
+	    if (enrollmentSuccess) {
+	        System.out.println("Successfully enrolled in course.");
+	        return true;
+	    } else {
+	        System.out.println("Enrollment failed. CourseID may be invalid or already enrolled.");
+	        return false;
+	    }
 	}
+
      
 	// Tạo feedback
 	public boolean makeFeedback(String traineeId) {
-		// Step 1: Display the list of courses the trainee is enrolled in
-		ArrayList<Course> enrolledCourses = getCoursesEnrolled(traineeId);
+	    // Step 1: Display the list of courses the trainee is enrolled in
+	    ArrayList<Course> enrolledCourses = getCoursesEnrolled(traineeId);
 
-		if (enrolledCourses.isEmpty()) {
-			System.out.println("You are not enrolled in any courses.");
-			return false;
-		}
+	    if (enrolledCourses == null || enrolledCourses.isEmpty()) {
+	        System.out.println("You are not enrolled in any courses.");
+	        return false;
+	    }
 
-		System.out.println("List of courses you are enrolled in:");
-		for (int i = 0; i < enrolledCourses.size(); i++) {
-			Course course = enrolledCourses.get(i);
-			System.out.println((i + 1) + ". " + course.getCourseName());
-		}
+	    System.out.println("List of courses you are enrolled in:");
+	    for (int i = 0; i < enrolledCourses.size(); i++) {
+	        Course course = enrolledCourses.get(i);
+	        System.out.println((i + 1) + ". " + course.getCourseName());
+	    }
 
-		// Step 2: Choose a course to provide feedback
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Select a course to provide feedback (enter the course number): ");
-		int courseIndex = scanner.nextInt() - 1;
-		scanner.nextLine(); // Consume the newline character
+	    // Step 2: Choose a course to provide feedback
+	   
+	    int courseIndex = -1;
 
-		if (courseIndex < 0 || courseIndex >= enrolledCourses.size()) {
-			System.out.println("Invalid selection.");
-			return false;
-		}
+	    while (courseIndex < 0 || courseIndex >= enrolledCourses.size()) {
+	        System.out.print("Select a course to provide feedback (enter the course number): ");
+	        try {
+	            courseIndex = Utils.readInt("Select a course to provide feedback (enter the course number):")-1;
+	           // Consume the newline character
+	            if (courseIndex < 0 || courseIndex >= enrolledCourses.size()) {
+	                System.out.println("Invalid selection. Please try again.");
+	            }
+	        } catch (InputMismatchException e) {
+	            System.out.println("Invalid input. Please enter a valid number.");
+	           // Clear the invalid input
+	        }
+	    }
+      
+	    Course selectedCourse = enrolledCourses.get(courseIndex);
 
-		Course selectedCourse = enrolledCourses.get(courseIndex);
+	    // Step 3: Enter feedback comments
+	    String feedbackComment = Utils.readString("Enter your feedback: ");
 
-		// Step 3: Enter feedback comments
-		System.out.print("Enter your feedback: ");
-		String feedbackComment = scanner.nextLine();
+	    int currentFeedbackCount = FeedbackService.feedbackCache.size();
+	    // Step 4: Generate feedback and save it to the feedback list
+	    String feedbackId = generateFeedbackId(currentFeedbackCount + 1); // Generate feedback ID
+	    String courseId = selectedCourse.getCourseId();
+	    String coachId = selectedCourse.getCoachID();
 
-		int currentFeedbackCount = FeedbackService.feedbackCache.size();
-		// Step 4: Generate feedback and save it to the feedback list
-		String feedbackId = generateFeedbackId(currentFeedbackCount + 1); // Generate feedback ID, e.g., FB-1234
-		String courseId = selectedCourse.getCourseId();
-		String coachId = selectedCourse.getCoachID();
+	    // Create a new Feedback object
+	    Feedback feedback = new Feedback(feedbackId, traineeId, courseId, coachId, feedbackComment);
 
-		// Create a new Feedback object
-		Feedback feedback = new Feedback(feedbackId, traineeId, courseId, coachId, feedbackComment);
+	    // Check if feedbackService is initialized
+	    if (feedbackService != null) {
+	        feedbackService.addFeedback(feedback);
+	        System.out.println("Your feedback has been successfully submitted!");
+	    } else {
+	        System.out.println("Error: Feedback service is not available.");
+	    }
 
-		// Save feedback to a feedback list (or database)
-		feedbackService.addFeedback(feedback);
-
-		System.out.println("Your feedback has been successfully submitted!");
-		return true;
+	    // Note: Do not close the scanner here if it's used elsewhere
+	    return true;
 	}
+
 
 	// Helper method to generate feedback ID
 	public String generateFeedbackId(int feedbackCount) {
@@ -245,6 +279,19 @@ public class TraineeController {
 		return currentCourses;
 	}
 
+	
+
+	public List<Schedule> getSchedulesForCurrentWeek(List<Schedule> schedules) {
+	    LocalDate today = LocalDate.now();
+	    LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+	    LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+	    return schedules.stream()
+	        .filter(schedule -> !schedule.getDate().isBefore(startOfWeek) && !schedule.getDate().isAfter(endOfWeek))
+	        .sorted(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime))
+	        .collect(Collectors.toList());
+	}
+
 	public List<Schedule> getSchedulesByCourses(List<Course> courses) {
 		List<Schedule> allSchedules = scheduleService.getAllSchedules();
 		List<Schedule> selectedSchedules = new ArrayList<>();
@@ -260,40 +307,42 @@ public class TraineeController {
 	}
 
 	public boolean viewSchedule(String traineeId) {
-		CourseService courseService = new CourseService(); // Dịch vụ khóa học
+	    List<Course> currentCourses = getCurrentCoursesByTraineeId(traineeId);
+	    if (currentCourses.isEmpty()) {
+	        System.out.println("Không có khóa học nào đang diễn ra cho trainee với ID: " + traineeId);
+	        return false;
+	    }
 
-		// Bước 1: Lọc khóa học của trainee ở thời điểm hiện tại
-		List<Course> currentCourses = getCurrentCoursesByTraineeId(traineeId); // Lấy danh sách khóa học hiện tại
+	    List<Schedule> allSchedules = getSchedulesByCourses(currentCourses);
+	    List<Schedule> schedulesForCurrentWeek = getSchedulesForCurrentWeek(allSchedules);
 
-		if (currentCourses.isEmpty()) {
-			System.out.println("Không có khóa học nào đang diễn ra cho trainee với ID: " + traineeId);
-			return false;
-		} else {
-			// Bước 2: Lấy lịch học (Schedule) từ khóa học
-			List<Schedule> schedules = getSchedulesByCourses(currentCourses); // Lấy lịch học từ danh sách khóa học
+	    if (schedulesForCurrentWeek.isEmpty()) {
+	        System.out.println("Không có lịch tập trong tuần hiện tại cho khóa học của bạn.");
+	        return false;
+	    }
 
-			// Bước 3: Sắp xếp các lịch học theo thời gian (date và startTime)
-			Collections.sort(schedules, Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
-
-			// Bước 4: In ra thông tin của mỗi lịch học
-			System.out.println("Lịch học của trainee với ID: " + traineeId + ":");
-
-			System.out.println(String.format("| %-12s | %-10s | %-20s | %-12s | %-12s | %-10s | %-10s |", "Schedule ID",
-					"Course ID", "Course Name", "Course Type", "Date", "Start Time", "End Time"));
-
-			System.out.println(
-					"---------------------------------------------------------------------------------------------");
-
-			for (Schedule schedule1 : schedules) {
-				Course course1 = courseService.getCourseById(schedule1.getCourseID()); // Giả sử có phương thức này
-				System.out.println(String.format("| %-12s | %-10s | %-20s | %-12s | %-12s | %-10s | %-10s |",
-						schedule1.getScheduleId(), schedule1.getCourseID(), course1.getCourseName(),
-						course1.getCourseType(), schedule1.getDate(), schedule1.getStartTime(),
-						schedule1.getEndTime()));
-			}
-
-		}
-		return true;
+	    displaySchedules(schedulesForCurrentWeek, traineeId);
+	    return true;
 	}
+
+
+	private void displaySchedules(List<Schedule> schedules, String traineeId) {
+	    System.out.printf("%-12s %-10s %-20s %-12s %-12s %-10s %-10s\n", 
+	                      "Schedule ID", "Course ID", "Course Name", "Course Type", "Date", "Start Time", "End Time");
+	    System.out.println("---------------------------------------------------------------------------------------------");
+
+	    for (Schedule schedule : schedules) {
+	        Course course = courseService.getCourseById(schedule.getCourseID());
+	        String courseName = (course != null) ? course.getCourseName() : "Unknown Course";
+	        String courseType = (course != null) ? course.getCourseType() : "Unknown Type";
+
+	        System.out.printf("%-12s %-10s %-20s %-12s %-12s %-10s %-10s\n",
+	                          schedule.getScheduleId(), schedule.getCourseID(), 
+	                          courseName, courseType,
+	                          schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
+	    }
+	}
+
+
 
 }

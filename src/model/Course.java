@@ -128,7 +128,7 @@ public class Course {
     }
     @Override
     public String toString() {
-        return String.format("|%-10s|%-20s|%-50s|%-10s|%-10s|%-10d|%-10s|%-10s|%-10.2f|%-15d|", 
+        return String.format("| %-10s |%-20s|%-50s|%-10s|%-10s|%-10d|%-10s|%-10s|%-10.2f|%-15d|", 
             courseId, courseName, courseDescription, coachID, courseType, maxParticipants, 
             startDate, endDate, price, totalSessions);  // Thêm totalSessions vào phương thức toString
     }
